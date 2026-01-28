@@ -1,4 +1,4 @@
-# cliq ʘ
+# Cliq
 
 AI-powered CLI assistant for Neovim and tmux. Get instant help with commands, keybindings, and workflows — all running locally with complete privacy.
 

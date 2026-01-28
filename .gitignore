@@ -1,0 +1,43 @@
+# Binaries
+cliq
+cliq-*
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build output
+dist/
+bin/
+
+# Test binary
+*.test
+
+# Coverage
+coverage.out
+coverage.html
+
+# Dependency directories
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Debug files
+__debug_bin*
+
+# Local config (for development)
+.env
+.env.local
+
+# Model files (too large for git)
+*.gguf

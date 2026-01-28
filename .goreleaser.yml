@@ -1,0 +1,111 @@
+# GoReleaser configuration for Cliq
+# Documentation: https://goreleaser.com
+
+version: 2
+
+project_name: cliq
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+
+builds:
+  - id: cliq
+    main: .
+    binary: cliq
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
+      - -X main.date={{.Date}}
+    flags:
+      - -trimpath
+
+archives:
+  - id: cliq
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - Merge pull request
+      - Merge branch
+
+release:
+  github:
+    owner: cliq-cli
+    name: cliq
+  draft: false
+  prerelease: auto
+  name_template: "{{.Tag}}"
+  header: |
+    ## Cliq {{.Tag}}
+
+    AI-powered CLI assistant for Neovim and tmux.
+
+  footer: |
+    ## Installation
+
+    ### Quick Install
+    ```bash
+    curl -sSL https://raw.githubusercontent.com/cliq-cli/cliq/main/scripts/install.sh | bash
+    ```
+
+    ### Homebrew
+    ```bash
+    brew install cliq-cli/tap/cliq
+    ```
+
+    ### Manual
+    Download the appropriate binary for your platform from the assets below.
+
+    ## Getting Started
+    ```bash
+    cliq init                      # Download model and setup
+    cliq "how do I delete a line"  # Ask a question
+    cliq -i                        # Interactive mode
+    ```
+
+brews:
+  - repository:
+      owner: cliq-cli
+      name: homebrew-tap
+    directory: Formula
+    homepage: "https://github.com/cliq-cli/cliq"
+    description: "AI-powered CLI assistant for Neovim and tmux"
+    license: "MIT"
+    test: |
+      system "#{bin}/cliq", "version"
+    install: |
+      bin.install "cliq"
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
+
+# Announce releases (optional)
+# announce:
+#   skip: true

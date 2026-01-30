@@ -25,6 +25,8 @@ type GeneralConfig struct {
 // ModelConfig holds model-related settings
 type ModelConfig struct {
 	Path        string  `toml:"path"`
+	Backend     string  `toml:"backend"`      // ollama, llama-server, llama-cli, auto
+	OllamaModel string  `toml:"ollama_model"` // model name for ollama (default: phi3)
 	AutoUpdate  bool    `toml:"auto_update"`
 	Temperature float64 `toml:"temperature"`
 	MaxTokens   int     `toml:"max_tokens"`
@@ -69,6 +71,8 @@ func Default() *Config {
 		},
 		Model: ModelConfig{
 			Path:        filepath.Join(dataDir, "model", "phi-3-mini-q4.gguf"),
+			Backend:     "auto",
+			OllamaModel: "phi3",
 			AutoUpdate:  false,
 			Temperature: 0.7,
 			MaxTokens:   512,

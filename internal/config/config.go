@@ -72,9 +72,9 @@ func Default() *Config {
 		Model: ModelConfig{
 			Path:        filepath.Join(dataDir, "model", "phi-3-mini-q4.gguf"),
 			Backend:     "auto",
-			OllamaModel: "phi3",
+			OllamaModel: "mistral",
 			AutoUpdate:  false,
-			Temperature: 0.7,
+			Temperature: 0.3, // Lower temperature for factual accuracy
 			MaxTokens:   512,
 		},
 		Nvim: NvimConfig{

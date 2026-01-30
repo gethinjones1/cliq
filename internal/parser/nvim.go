@@ -58,6 +58,29 @@ func ParseNvimConfig(configPath string) (*NvimConfig, error) {
 		}
 	}
 
+	// Parse LazyVim/common config structure files
+	configFiles := []string{
+		filepath.Join(configPath, "lua", "config", "keymaps.lua"),
+		filepath.Join(configPath, "lua", "config", "options.lua"),
+		filepath.Join(configPath, "lua", "config", "lazy.lua"),
+		filepath.Join(configPath, "lua", "user", "keymaps.lua"),
+		filepath.Join(configPath, "lua", "user", "options.lua"),
+	}
+
+	for _, file := range configFiles {
+		if _, err := os.Stat(file); err == nil {
+			cfg.parseLuaConfig(file)
+		}
+	}
+
+	// Detect LazyVim and set Space as leader if not explicitly set
+	lazyLua := filepath.Join(configPath, "lua", "config", "lazy.lua")
+	if content, err := os.ReadFile(lazyLua); err == nil {
+		if strings.Contains(string(content), "LazyVim/LazyVim") && cfg.Leader == "\\" {
+			cfg.Leader = " " // LazyVim default is Space
+		}
+	}
+
 	// Check for lazy.nvim plugin specs
 	lazyDir := filepath.Join(configPath, "lua", "plugins")
 	if _, err := os.Stat(lazyDir); err == nil {
@@ -121,33 +144,71 @@ func (cfg *NvimConfig) extractLeaderFromLua(content string) {
 
 // extractKeymapsFromLua extracts keymap definitions from Lua code
 func (cfg *NvimConfig) extractKeymapsFromLua(content, source string) {
-	// Pattern: vim.keymap.set("mode", "lhs", "rhs" or function, opts)
-	pattern := `vim\.keymap\.set\s*\(\s*["']([nvixsotc]+)["']\s*,\s*["']([^"']+)["']\s*,\s*(?:["']([^"']+)["']|function|[^,]+)\s*(?:,\s*\{([^}]*)\})?`
-	re := regexp.MustCompile(pattern)
+	// Check if there's an alias like "local map = vim.keymap.set"
+	hasMapAlias := regexp.MustCompile(`local\s+map\s*=\s*vim\.keymap\.set`).MatchString(content)
 
-	matches := re.FindAllStringSubmatch(content, -1)
-	for _, match := range matches {
-		if len(match) < 3 {
-			continue
-		}
+	// Pattern: vim.keymap.set("mode", "lhs", rhs, opts)
+	// rhs can be: "string", function() ... end, or a function reference like dap.continue
+	// Also matches: map("mode", "lhs", ...) if alias is detected
+	//
+	// Simpler approach: capture mode, lhs, and look for desc in the options
+	patterns := []string{
+		// vim.keymap.set with single mode
+		`vim\.keymap\.set\s*\(\s*["']([nvixsotc]+)["']\s*,\s*["']([^"']+)["']\s*,\s*([^,]+),\s*\{([^}]*)\}\s*\)`,
+		// vim.keymap.set with mode table
+		`vim\.keymap\.set\s*\(\s*\{\s*["']([nvixsotc]+)["'][^}]*\}\s*,\s*["']([^"']+)["']\s*,\s*([^,]+),\s*\{([^}]*)\}\s*\)`,
+	}
 
-		km := Keymap{
-			Mode:   match[1],
-			Lhs:    match[2],
-			Rhs:    match[3],
-			Source: source,
-		}
+	// If map alias is used, add patterns for it
+	if hasMapAlias {
+		patterns = append(patterns,
+			// map() with single mode
+			`\bmap\s*\(\s*["']([nvixsotc]+)["']\s*,\s*["']([^"']+)["']\s*,\s*([^,]+),\s*\{([^}]*)\}\s*\)`,
+			// map() with mode table
+			`\bmap\s*\(\s*\{\s*["']([nvixsotc]+)["'][^}]*\}\s*,\s*["']([^"']+)["']\s*,\s*([^,]+),\s*\{([^}]*)\}\s*\)`,
+		)
+	}
 
-		// Try to extract description from opts
-		if len(match) > 4 && match[4] != "" {
-			descPattern := `desc\s*=\s*["']([^"']+)["']`
-			descRe := regexp.MustCompile(descPattern)
-			if descMatch := descRe.FindStringSubmatch(match[4]); len(descMatch) > 1 {
-				km.Description = descMatch[1]
+	for _, pattern := range patterns {
+		re := regexp.MustCompile(pattern)
+		matches := re.FindAllStringSubmatch(content, -1)
+
+		for _, match := range matches {
+			if len(match) < 3 {
+				continue
 			}
-		}
 
-		cfg.Keymaps = append(cfg.Keymaps, km)
+			rhs := strings.TrimSpace(match[3])
+			// Clean up RHS - extract string content or function name
+			if strings.HasPrefix(rhs, `"`) || strings.HasPrefix(rhs, `'`) {
+				// It's a string, extract the content
+				rhs = strings.Trim(rhs, `"'`)
+			} else if strings.HasPrefix(rhs, "function") {
+				rhs = "[function]"
+			} else {
+				// Function reference like dap.continue - keep it as-is
+				rhs = "[" + rhs + "]"
+			}
+
+			km := Keymap{
+				Mode:   match[1],
+				Lhs:    match[2],
+				Rhs:    rhs,
+				Source: source,
+			}
+
+			// Try to extract description from opts
+			if len(match) > 3 && match[len(match)-1] != "" {
+				opts := match[len(match)-1]
+				descPattern := `desc\s*=\s*["']([^"']+)["']`
+				descRe := regexp.MustCompile(descPattern)
+				if descMatch := descRe.FindStringSubmatch(opts); len(descMatch) > 1 {
+					km.Description = descMatch[1]
+				}
+			}
+
+			cfg.Keymaps = append(cfg.Keymaps, km)
+		}
 	}
 
 	// Also look for map/noremap style (using vim.cmd)

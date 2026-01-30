@@ -4,10 +4,11 @@ AI-powered CLI assistant for Neovim and tmux. Get instant help with commands, ke
 
 ## Features
 
-- **Privacy-first**: Runs entirely locally using a small language model (Phi-3-mini). No data leaves your machine.
+- **Privacy-first**: Runs locally using ollama with Mistral (7B). No data leaves your machine.
 - **Configuration-aware**: Parses your Neovim and tmux configs to provide personalized responses including your custom keymaps.
 - **Fast**: Optimized for quick responses. Get help without breaking your flow.
 - **Interactive mode**: Full TUI for exploring commands and keybindings.
+- **Multiple backends**: Supports ollama (recommended), llama-server, and llama-cli.
 - **Cross-platform**: Works on macOS (Intel & Apple Silicon) and Linux.
 
 ## Quick Start
@@ -33,16 +34,26 @@ make install
 
 ### Setup
 
-Initialize Cliq to download the language model and detect your configurations:
+**1. Install ollama (recommended):**
+```bash
+# macOS
+brew install ollama
 
+# Linux
+curl -fsSL https://ollama.ai/install.sh | sh
+```
+
+**2. Pull the model:**
+```bash
+ollama pull mistral
+```
+
+**3. Initialize Cliq:**
 ```bash
 cliq init
 ```
 
-This will:
-1. Download the Phi-3-mini model (~2.3GB)
-2. Detect your Neovim and tmux configuration files
-3. Create the initial configuration
+This will detect your Neovim and tmux configuration files and create the initial config.
 
 ### Usage
 
@@ -113,8 +124,9 @@ Cliq stores its configuration in `~/.config/cliq/config.toml`:
 response_style = "concise"  # concise, detailed, minimal
 
 [model]
-path = "~/.local/share/cliq/model/phi-3-mini-q4.gguf"
-temperature = 0.7
+backend = "ollama"          # ollama, llama-server, llama-cli, auto
+ollama_model = "mistral"    # model name for ollama
+temperature = 0.3
 max_tokens = 512
 
 [nvim]
@@ -131,9 +143,18 @@ enabled = true
 ttl_hours = 24
 ```
 
+To use a different ollama model:
+```bash
+# Via config
+ollama_model = "llama3"
+
+# Or via environment variable
+CLIQ_OLLAMA_MODEL=llama3 cliq "your query"
+```
+
 ## How It Works
 
-1. **Local LLM**: Cliq uses Phi-3-mini (3.8B parameters, Q4 quantization) for inference. The model runs entirely on your machine.
+1. **Local LLM**: Cliq uses Mistral (7B) via ollama by default. Supports multiple backends (ollama, llama-server, llama-cli).
 
 2. **Config Parsing**: Cliq parses your Neovim Lua/Vimscript configs and tmux.conf to understand your custom keymaps and plugins.
 
@@ -152,15 +173,15 @@ ttl_hours = 24
 Cliq is designed with privacy as a core principle:
 
 - **No telemetry**: Zero analytics or tracking
-- **Local-only**: All processing happens on your machine
-- **No network calls**: After initial model download, Cliq works entirely offline
+- **Local-only**: All processing happens on your machine via ollama
 - **Open source**: Full code transparency
 
 ## Requirements
 
 - macOS 10.15+ or Linux
-- ~3GB disk space for the model
-- ~8GB RAM recommended for inference
+- [ollama](https://ollama.ai) installed and running
+- ~4GB disk space for the mistral model
+- ~8GB RAM recommended
 
 ## Building from Source
 
@@ -195,7 +216,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-- [Phi-3](https://huggingface.co/microsoft/Phi-3-mini-4k-instruct) by Microsoft
-- [llama.cpp](https://github.com/ggerganov/llama.cpp) for efficient inference
+- [ollama](https://ollama.ai) for local LLM inference
+- [Mistral](https://mistral.ai) for the default model
 - [Cobra](https://github.com/spf13/cobra) and [Viper](https://github.com/spf13/viper) for CLI framework
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea) for the TUI

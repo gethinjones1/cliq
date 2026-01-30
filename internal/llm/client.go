@@ -15,6 +15,7 @@ import (
 // Client wraps the LLM inference engine
 type Client struct {
 	modelPath   string
+	ollamaModel string
 	temperature float64
 	maxTokens   int
 	backend     string // "llama-server", "ollama", "llama-cli"
@@ -22,9 +23,10 @@ type Client struct {
 }
 
 // NewClient creates a new LLM client and auto-detects the best available backend
-func NewClient(modelPath string, temperature float64, maxTokens int) (*Client, error) {
+func NewClient(modelPath string, ollamaModel string, temperature float64, maxTokens int) (*Client, error) {
 	client := &Client{
 		modelPath:   modelPath,
+		ollamaModel: ollamaModel,
 		temperature: temperature,
 		maxTokens:   maxTokens,
 	}
@@ -179,8 +181,7 @@ func (c *Client) queryLlamaServer(prompt string) (string, error) {
 
 // queryOllama queries the Ollama API
 func (c *Client) queryOllama(prompt string) (string, error) {
-	// Use phi3 model by default (can be configured)
-	model := "phi3"
+	model := c.ollamaModel
 	if os.Getenv("CLIQ_OLLAMA_MODEL") != "" {
 		model = os.Getenv("CLIQ_OLLAMA_MODEL")
 	}

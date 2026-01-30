@@ -119,7 +119,7 @@ func initLLM() tea.Msg {
 		return initMsg{err: fmt.Errorf("model not found. Run 'cliq init' first")}
 	}
 
-	client, err := llm.NewClient(modelPath, cfg.Model.Temperature, cfg.Model.MaxTokens)
+	client, err := llm.NewClient(modelPath, cfg.Model.OllamaModel, cfg.Model.Temperature, cfg.Model.MaxTokens)
 	if err != nil {
 		return initMsg{err: fmt.Errorf("failed to load model: %w", err)}
 	}

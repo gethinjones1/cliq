@@ -208,13 +208,13 @@ func (r *Response) ToMarkdown() string {
 	return sb.String()
 }
 
-// ToText returns the response as formatted plain text
+// ToText returns the response as formatted plain text with styling
 func (r *Response) ToText() string {
 	// If we have the raw output and couldn't parse it well, return it directly
 	if r.Command == "" && r.Explanation == "" && r.Raw != "" {
 		return r.Raw
 	}
 
-	// Otherwise format nicely
-	return r.Raw
+	// Use styled rendering
+	return RenderResponse(r)
 }

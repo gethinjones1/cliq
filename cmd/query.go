@@ -60,17 +60,20 @@ func executeQuery(query string, cfg *config.Config) error {
 	// Build prompt with configuration context
 	prompt := llm.BuildPrompt(query, nvimConfig, tmuxConfig)
 
-	if verbose {
-		fmt.Fprintln(os.Stderr, "Query:", query)
-		fmt.Fprintln(os.Stderr, "Model:", cfg.GetModelPath())
-	}
-
 	// Create LLM client
-	client, err := llm.NewClient(cfg.GetModelPath(), cfg.Model.Temperature, cfg.Model.MaxTokens)
+	client, err := llm.NewClient(cfg.GetModelPath(), cfg.Model.OllamaModel, cfg.Model.Temperature, cfg.Model.MaxTokens)
 	if err != nil {
 		return fmt.Errorf("failed to initialize LLM: %w", err)
 	}
 	defer client.Close()
+
+	if verbose {
+		fmt.Fprintln(os.Stderr, "Query:", query)
+		fmt.Fprintln(os.Stderr, "Backend:", client.GetBackend())
+		if client.GetBackend() == "ollama" {
+			fmt.Fprintln(os.Stderr, "Model:", cfg.Model.OllamaModel)
+		}
+	}
 
 	// Generate response
 	llmResponse, err := client.Query(prompt)

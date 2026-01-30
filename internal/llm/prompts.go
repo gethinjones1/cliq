@@ -111,7 +111,19 @@ Q: copy 5 lines in vim
 Command: 5yy
 Explanation: Yanks (copies) 5 lines starting from the cursor into the default register.
 Alternatives: V4jy (visual select 5 lines then yank)
-Related: p (paste below), P (paste above), "+y (yank to system clipboard)`
+Related: p (paste below), P (paste above), "+y (yank to system clipboard)
+
+Q: how do I edit multiple lines at once
+Command: Ctrl-v, select lines, I, type text, Esc
+Explanation: Visual block mode (Ctrl-v) lets you select a column, then I inserts at the start of each line. Press Esc to apply to all lines.
+Alternatives: :norm I// (prepend // to selected lines), . to repeat last change on each line
+Related: Ctrl-v + A (append to end), Ctrl-v + c (change block), Ctrl-v + d (delete block)
+
+Q: select all occurrences of a word and edit them
+Command: * then cgn then . to repeat
+Explanation: * searches for the word under cursor, cgn changes the next match, then press . to repeat the change on each subsequent match.
+Alternatives: :%s/old/new/gc (interactive replace all with confirmation)
+Related: n/N (next/prev match), gn (select next match), # (search word backward)`
 
 // BuildPrompt constructs the full prompt including user configuration context
 func BuildPrompt(query string, nvimCfg *parser.NvimConfig, tmuxCfg *parser.TmuxConfig) string {

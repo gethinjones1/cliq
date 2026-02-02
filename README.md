@@ -1,6 +1,6 @@
 # Cliq
 
-AI-powered CLI assistant for Neovim and tmux. Get instant help with commands, keybindings, and workflows — all running locally with complete privacy.
+AI-powered CLI assistant for Neovim, tmux, and Unix shell commands. Get instant help with commands, keybindings, and workflows — all running locally with complete privacy.
 
 ## Features
 
@@ -61,7 +61,8 @@ This will detect your Neovim and tmux configuration files and create the initial
 ```bash
 cliq "how do I delete a line in vim"
 cliq "split tmux window vertically"
-cliq "search and replace in visual mode"
+cliq "find process running on port 8080"
+cliq "awk to get second column"
 ```
 
 **Interactive mode:**
